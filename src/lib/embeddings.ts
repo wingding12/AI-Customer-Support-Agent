@@ -32,7 +32,7 @@ export async function createEmbedding(text: string): Promise<number[] | null> {
 
   try {
     const response = await client.embeddings.create({
-      model: "text-embedding-ada-002",
+      model: "text-embedding-3-small",
       input: text,
     });
 
@@ -56,11 +56,11 @@ export async function createEmbeddings(
 
   try {
     const response = await client.embeddings.create({
-      model: "text-embedding-ada-002",
+      model: "text-embedding-3-small",
       input: texts,
     });
 
-    const embeddings = response.data.map(item => item.embedding);
+    const embeddings = response.data.map((item) => item.embedding);
     logger.info(`Created ${embeddings.length} embeddings`);
     return embeddings;
   } catch (error) {

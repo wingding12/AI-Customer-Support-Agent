@@ -240,7 +240,7 @@ export const avenKnowledgeBase: AvenKnowledge[] = [
 export function searchKnowledge(query: string): AvenKnowledge[] {
   const lowercaseQuery = query.toLowerCase();
   return avenKnowledgeBase.filter(
-    item =>
+    (item) =>
       item.content.toLowerCase().includes(lowercaseQuery) ||
       item.topic.toLowerCase().includes(lowercaseQuery) ||
       item.category.toLowerCase().includes(lowercaseQuery)
@@ -249,10 +249,10 @@ export function searchKnowledge(query: string): AvenKnowledge[] {
 
 // Get knowledge by category
 export function getKnowledgeByCategory(category: string): AvenKnowledge[] {
-  return avenKnowledgeBase.filter(item => item.category === category);
+  return avenKnowledgeBase.filter((item) => item.category === category);
 }
 
 // Get all categories
 export function getCategories(): string[] {
-  return [...new Set(avenKnowledgeBase.map(item => item.category))];
+  return [...new Set(avenKnowledgeBase.map((item) => item.category))];
 }
