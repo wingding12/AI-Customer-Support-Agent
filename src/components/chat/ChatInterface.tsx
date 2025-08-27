@@ -22,12 +22,15 @@ import {
   stopVoiceCall,
   toggleMute,
   getVapiInstance,
+  getVapiConfigStatus,
 } from "@/lib/vapi";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function ChatInterface() {
   const [input, setInput] = useState("");
   const [isVoiceCallActive, setIsVoiceCallActive] = useState(false);
+  const [vapiConfigReady, setVapiConfigReady] = useState(false);
+  const [vapiConfigError, setVapiConfigError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -50,6 +53,22 @@ export default function ChatInterface() {
 
   // Initialize Vapi listeners
   useEffect(() => {
+    const { hasPublicKey, hasAssistantId } = getVapiConfigStatus();
+    const ready = hasPublicKey && hasAssistantId;
+    setVapiConfigReady(ready);
+    if (!ready) {
+      const missing = [
+        !hasPublicKey ? "NEXT_PUBLIC_VAPI_PUBLIC_KEY" : null,
+        !hasAssistantId ? "NEXT_PUBLIC_VAPI_ASSISTANT_ID" : null,
+      ]
+        .filter(Boolean)
+        .join(", ");
+      const message = `Voice not configured. Missing env: ${missing}`;
+      setVapiConfigError(message);
+    } else {
+      setVapiConfigError(null);
+    }
+
     getVapiInstance({
       onMessage: (message: Record<string, unknown>) => {
         const messageType = message.type as string;
@@ -125,7 +144,7 @@ export default function ChatInterface() {
         },
         body: JSON.stringify({
           message: userMessage,
-          history: messages.slice(-6).map(m => ({
+          history: messages.slice(-6).map((m) => ({
             role: m.role,
             content: m.content,
           })),
@@ -160,6 +179,18 @@ export default function ChatInterface() {
 
   const handleVoiceToggle = async () => {
     try {
+      if (!vapiConfigReady) {
+        const description =
+          vapiConfigError ||
+          "Voice assistant is not configured. Set Vapi env variables and reload.";
+        toast({
+          title: "Voice unavailable",
+          description,
+          variant: "destructive",
+        });
+        return;
+      }
+
       if (isVoiceCallActive) {
         await stopVoiceCall();
         setIsVoiceCallActive(false);
@@ -229,6 +260,7 @@ export default function ChatInterface() {
                   ? "bg-red-500 hover:bg-red-600"
                   : "bg-white/20 hover:bg-white/30"
               } text-white`}
+              disabled={!vapiConfigReady}
             >
               {isVoiceCallActive ? (
                 <>
@@ -265,12 +297,22 @@ export default function ChatInterface() {
               )}
             </motion.div>
           )}
+          {!isVoiceCallActive && vapiConfigError && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mt-3 text-xs text-red-100"
+            >
+              {vapiConfigError}
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map(message => (
+        {messages.map((message) => (
           <ChatMessage key={message.id} message={message} />
         ))}
 
@@ -294,7 +336,7 @@ export default function ChatInterface() {
       {/* Input Area */}
       <div className="p-4 border-t bg-gray-50">
         <form
-          onSubmit={e => {
+          onSubmit={(e) => {
             e.preventDefault();
             handleSendMessage();
           }}
@@ -302,7 +344,7 @@ export default function ChatInterface() {
         >
           <Input
             value={input}
-            onChange={e => setInput(e.target.value)}
+            onChange={(e) => setInput(e.target.value)}
             placeholder="Type your message or click the phone to speak..."
             disabled={isLoading || isVoiceCallActive}
             className="flex-1"

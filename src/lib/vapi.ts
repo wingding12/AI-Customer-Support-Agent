@@ -24,11 +24,21 @@ export interface VapiConfig {
   onTranscript?: (transcript: Record<string, unknown>) => void;
 }
 
+export function getVapiConfigStatus(): {
+  hasPublicKey: boolean;
+  hasAssistantId: boolean;
+} {
+  return {
+    hasPublicKey: Boolean(env.NEXT_PUBLIC_VAPI_PUBLIC_KEY),
+    hasAssistantId: Boolean(env.NEXT_PUBLIC_VAPI_ASSISTANT_ID),
+  };
+}
+
 export function getVapiInstance(config?: VapiConfig): Vapi | null {
   const publicKey = config?.publicKey || env.NEXT_PUBLIC_VAPI_PUBLIC_KEY;
 
   if (!publicKey) {
-    logger.warn("Vapi public key not configured");
+    logger.warn("Vapi public key not configured (NEXT_PUBLIC_VAPI_PUBLIC_KEY)");
     return null;
   }
 
@@ -114,12 +124,16 @@ export function getVapiInstance(config?: VapiConfig): Vapi | null {
 export async function startVoiceCall(assistantId?: string): Promise<void> {
   const vapi = getVapiInstance();
   if (!vapi) {
-    throw new Error("Vapi not initialized");
+    throw new Error(
+      "Vapi public key missing. Set NEXT_PUBLIC_VAPI_PUBLIC_KEY in your env."
+    );
   }
 
   const id = assistantId || env.NEXT_PUBLIC_VAPI_ASSISTANT_ID;
   if (!id) {
-    throw new Error("Assistant ID not configured");
+    throw new Error(
+      "Vapi assistant ID missing. Set NEXT_PUBLIC_VAPI_ASSISTANT_ID in your env."
+    );
   }
 
   try {

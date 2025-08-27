@@ -383,6 +383,9 @@ const envSchema = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2
     PINECONE_API_KEY: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$route$5d$__$28$ecmascript$29$__["z"].string().optional(),
     PINECONE_ENVIRONMENT: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$route$5d$__$28$ecmascript$29$__["z"].string().optional(),
     PINECONE_INDEX_NAME: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$route$5d$__$28$ecmascript$29$__["z"].string().default("aven-knowledge-base"),
+    // Exa (web search/scraping) Configuration
+    EXA_API_KEY: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$route$5d$__$28$ecmascript$29$__["z"].string().optional(),
+    EXA_BASE_URL: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$route$5d$__$28$ecmascript$29$__["z"].string().default("https://api.exa.ai"),
     // Vapi Configuration
     VAPI_API_KEY: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$route$5d$__$28$ecmascript$29$__["z"].string().optional(),
     NEXT_PUBLIC_VAPI_PUBLIC_KEY: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$route$5d$__$28$ecmascript$29$__["z"].string().optional(),
@@ -399,6 +402,8 @@ const validateEnv = ()=>{
             PINECONE_API_KEY: process.env.PINECONE_API_KEY,
             PINECONE_ENVIRONMENT: process.env.PINECONE_ENVIRONMENT,
             PINECONE_INDEX_NAME: process.env.PINECONE_INDEX_NAME,
+            EXA_API_KEY: process.env.EXA_API_KEY,
+            EXA_BASE_URL: process.env.EXA_BASE_URL || "https://api.exa.ai",
             VAPI_API_KEY: process.env.VAPI_API_KEY,
             NEXT_PUBLIC_VAPI_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY,
             NEXT_PUBLIC_VAPI_ASSISTANT_ID: process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID
@@ -423,6 +428,8 @@ const validateEnv = ()=>{
                 PINECONE_API_KEY: process.env.PINECONE_API_KEY || "",
                 PINECONE_ENVIRONMENT: process.env.PINECONE_ENVIRONMENT || "",
                 PINECONE_INDEX_NAME: process.env.PINECONE_INDEX_NAME || "aven-knowledge-base",
+                EXA_API_KEY: process.env.EXA_API_KEY || "",
+                EXA_BASE_URL: process.env.EXA_BASE_URL || "https://api.exa.ai",
                 VAPI_API_KEY: process.env.VAPI_API_KEY || "",
                 NEXT_PUBLIC_VAPI_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY || "",
                 NEXT_PUBLIC_VAPI_ASSISTANT_ID: process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID || ""
@@ -570,7 +577,7 @@ async function createEmbedding(text) {
     }
     try {
         const response = await client.embeddings.create({
-            model: "text-embedding-ada-002",
+            model: "text-embedding-3-small",
             input: text
         });
         const embedding = response.data[0].embedding;
@@ -591,7 +598,7 @@ async function createEmbeddings(texts) {
     }
     try {
         const response = await client.embeddings.create({
-            model: "text-embedding-ada-002",
+            model: "text-embedding-3-small",
             input: texts
         });
         const embeddings = response.data.map((item)=>item.embedding);
