@@ -27,6 +27,7 @@ Before you begin, you'll need API keys from:
 1. **OpenAI** - For embeddings and chat completions ([Get API Key](https://platform.openai.com/api-keys))
 2. **Pinecone** - For vector database storage ([Sign up free](https://www.pinecone.io))
 3. **Vapi** - For voice assistant capabilities ([Get Started](https://vapi.ai))
+4. **Exa** - For web search & content extraction ([Docs](https://exa.ai))
 
 ## Setup Instructions
 
@@ -62,6 +63,10 @@ NEXT_PUBLIC_VAPI_ASSISTANT_ID=your_vapi_assistant_id_here
 # Application Configuration
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NODE_ENV=development
+
+# Exa (optional but recommended for live web ingestion)
+EXA_API_KEY=your_exa_api_key_here
+EXA_BASE_URL=https://api.exa.ai
 ```
 
 ### 3. Set up Pinecone Index
@@ -78,7 +83,10 @@ NODE_ENV=development
 
 1. Log into your [Vapi Dashboard](https://dashboard.vapi.ai)
 2. Create a new assistant with the configuration provided in `src/lib/vapi.ts`
-3. Copy the Assistant ID to your `.env.local` file
+3. Set the webhook URL to: `${NEXT_PUBLIC_APP_URL}/api/vapi/webhook`
+4. Copy the Assistant ID to your `.env.local` file
+
+Note: If `NEXT_PUBLIC_VAPI_ASSISTANT_ID` is not set, the app falls back to the inline assistant configuration defined in `src/lib/vapi.ts`.
 
 ### 5. Initialize the Knowledge Base
 
@@ -90,6 +98,7 @@ npm run dev
 1. Open [http://localhost:3000?admin=true](http://localhost:3000?admin=true)
 2. Navigate to the "Admin" tab
 3. Click "Initialize Knowledge Base" to populate Pinecone with Aven data
+4. Optionally, click "Scrape & Ingest Latest Aven Info" to fetch fresh content using Exa and ingest it into Pinecone
 
 ### 6. Start Using the Application
 
@@ -146,6 +155,7 @@ src/
 
 - `POST /api/chat` - Process text chat messages
 - `POST /api/knowledge/init` - Initialize knowledge base
+- `POST /api/knowledge/scrape` - Scrape Aven pages via Exa and ingest to Pinecone
 - `POST /api/knowledge/search` - Search knowledge base
 - `POST /api/vapi/webhook` - Vapi webhook handler
 - `POST /api/voice/start` - Start voice call
@@ -203,6 +213,7 @@ The application can be deployed to any platform that supports Next.js:
    - Verify HTTPS is enabled in production
 
 3. **Knowledge base empty**
+
    - Run the initialization from the admin panel
    - Check Pinecone API key and environment settings
    - Verify OpenAI API key has sufficient credits

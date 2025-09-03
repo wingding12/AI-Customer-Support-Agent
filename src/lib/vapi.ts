@@ -1,7 +1,6 @@
 import Vapi from "@vapi-ai/web";
 import { env } from "@/config/env";
 import { Logger } from "@/utils/logger";
-import { generateRAGResponse } from "@/lib/rag";
 
 const logger = new Logger("Vapi");
 
@@ -84,33 +83,10 @@ export function getVapiInstance(config?: VapiConfig): Vapi | null {
       //   vapiInstance.on('transcript', config.onTranscript);
       // }
 
-      // Set up message handler for RAG integration
-      vapiInstance.on("message", async (message: Record<string, unknown>) => {
-        if (config?.onMessage) {
-          config.onMessage(message);
-        }
-
-        // Handle function calls for RAG integration
-        const messageType = message.type as string;
-        const functionCall = message.functionCall as
-          | { name?: string; parameters?: { query?: string } }
-          | undefined;
-
-        if (
-          messageType === "function-call" &&
-          functionCall?.name === "getAvenInfo"
-        ) {
-          const query = functionCall.parameters?.query || "";
-          logger.info("Processing Vapi function call for query:", query);
-
-          try {
-            await generateRAGResponse(query);
-            // Vapi will handle the function result through webhook
-            logger.info("Generated response for Vapi function call");
-          } catch (error) {
-            logger.error("Failed to process Vapi query", { error });
-          }
-        }
+      // Forward messages to the provided handler. Function-call resolution
+      // is handled server-side via the webhook at /api/vapi/webhook.
+      vapiInstance.on("message", (message: Record<string, unknown>) => {
+        if (config?.onMessage) config.onMessage(message);
       });
     } catch (error) {
       logger.error("Failed to initialize Vapi", { error });
@@ -130,15 +106,18 @@ export async function startVoiceCall(assistantId?: string): Promise<void> {
   }
 
   const id = assistantId || env.NEXT_PUBLIC_VAPI_ASSISTANT_ID;
-  if (!id) {
-    throw new Error(
-      "Vapi assistant ID missing. Set NEXT_PUBLIC_VAPI_ASSISTANT_ID in your env."
-    );
-  }
 
   try {
-    logger.info("Starting voice call with assistant:", id);
-    await vapi.start(id);
+    if (id) {
+      logger.info("Starting voice call with assistant:", id);
+      await vapi.start(id);
+    } else {
+      // Fallback to inline assistant config when no ID is provided
+      logger.warn(
+        "Assistant ID missing; starting call with inline assistant configuration"
+      );
+      await vapi.start(avenAssistantConfig as any);
+    }
     callActive = true;
     muted = false;
   } catch (error) {

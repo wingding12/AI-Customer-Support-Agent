@@ -54,13 +54,11 @@ export default function ChatInterface() {
   // Initialize Vapi listeners
   useEffect(() => {
     const { hasPublicKey, hasAssistantId } = getVapiConfigStatus();
-    const ready = hasPublicKey && hasAssistantId;
+    // Assistant ID is optional; we can fall back to inline config.
+    const ready = hasPublicKey;
     setVapiConfigReady(ready);
     if (!ready) {
-      const missing = [
-        !hasPublicKey ? "NEXT_PUBLIC_VAPI_PUBLIC_KEY" : null,
-        !hasAssistantId ? "NEXT_PUBLIC_VAPI_ASSISTANT_ID" : null,
-      ]
+      const missing = [!hasPublicKey ? "NEXT_PUBLIC_VAPI_PUBLIC_KEY" : null]
         .filter(Boolean)
         .join(", ");
       const message = `Voice not configured. Missing env: ${missing}`;
@@ -70,6 +68,9 @@ export default function ChatInterface() {
     }
 
     getVapiInstance({
+      onCall: () => {
+        setIsVoiceCallActive(true);
+      },
       onMessage: (message: Record<string, unknown>) => {
         const messageType = message.type as string;
         const transcript = message.transcript as
